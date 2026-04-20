@@ -207,6 +207,43 @@ async def handle_tiktok(message: discord.Message, content: str) -> Optional[Dict
     return None
 
 
+async def handle_instagram(message: discord.Message, content: str) -> Optional[Dict]:
+    """Handle Instagram link rewriting."""
+    # Skip if already rewritten
+    if "zzinstagram.com" in content:
+        return None
+
+    # Check if Instagram link exists
+    if not any(domain in content for domain in ["https://instagram.com", "https://www.instagram.com"]):
+        return None
+
+    pattern = r"https://(www\.)?instagram\.com"
+
+    new_content = re.sub(
+        pattern,
+        r"https://zzinstagram.com",
+        content
+    )
+
+    if new_content == content:
+        return None
+
+    # Find original link for the button
+    match = re.search(r"https://(www\.)?instagram\.com[^\s]*", content)
+    if match:
+        original_link = match.group(0)
+        view = build_link_button(original_link, "Open in Instagram")
+
+        return {
+            "new_text": new_content,
+            "original_url": original_link,
+            "view": view,
+            "delete_original": True
+        }
+
+    return None
+
+
 # ==================== HANDLER REGISTRY ====================
 
 def get_handlers() -> List[Callable]:
@@ -215,6 +252,7 @@ def get_handlers() -> List[Callable]:
         handle_twitter,
         handle_reddit,
         handle_tiktok,
+        handle_instagram,
     ]
 
 
