@@ -7,6 +7,7 @@ A stateless Discord bot that automatically rewrites social media links to use pr
 - **Twitter/X Links** → `fxtwitter.com` for better embeds
 - **Reddit Links** → `vxreddit.com` for video/media previews
 - **TikTok Links** → `tnktok.com` for improved previews
+- **Instagram Links** → `zzinstagram.com` for improved previews
 
 ## Required Bot Permissions
 
@@ -37,6 +38,13 @@ A stateless Discord bot that automatically rewrites social media links to use pr
 - `https://www.tiktok.com/@user/video/123456`
 
 **Rewrites to:** `https://tnktok.com/@user/video/123456`
+
+### Instagram
+- `https://instagram.com/reel/XYZ789/?igsh=...`
+- `https://www.instagram.com/p/ABC123/?igsh=...`
+- `https://www.instagram.com/reel/XYZ789/?igsh=...`
+
+**Rewrites to:** `https://zzinstagram.com/p/ABC123/?igsh=...`
 
 
 ## Extending the Bot
@@ -76,6 +84,7 @@ To add a new social platform:
            handle_twitter,
            handle_reddit,
            handle_tiktok,
+           handle_instagram,
            handle_newplatform,  # Add here
        ]
    ```
