@@ -4,8 +4,9 @@ import os
 import io
 import re
 import asyncio
-from typing import Dict, List, Optional, Callable
+from typing import Dict, List, Optional, Callable, Tuple
 from collections import defaultdict, deque
+import aiohttp
 import discord
 from dotenv import load_dotenv
 
@@ -27,6 +28,9 @@ channel_locks = defaultdict(asyncio.Lock)
 recently_processed: set = set()
 recently_processed_order: deque = deque()
 MAX_PROCESSED_CACHE = 1000
+
+# Discord's message length limit
+MAX_MESSAGE_LENGTH = 2000
 
 # Cache for webhooks
 webhook_cache: Dict[int, discord.Webhook] = {}
@@ -109,6 +113,47 @@ async def fetch_attachments(message: discord.Message) -> List[discord.File]:
         except Exception as e:
             print(f"Failed to fetch attachment '{attachment.filename}': {e}")
     return files
+
+
+async def fetch_translation(user: str, tweet_id: str) -> Optional[Tuple[str, str]]:
+    """Return (source language, English text) for a non-English tweet, else None.
+
+    Uses the keyless FxTwitter API. Any failure returns None so a translation
+    problem never blocks the link rewrite.
+    """
+    url = f"https://api.fxtwitter.com/{user}/status/{tweet_id}/en"
+    try:
+        async with aiohttp.ClientSession(
+            timeout=aiohttp.ClientTimeout(total=5),
+            headers={"User-Agent": "prettier-social (Discord bot)"},
+        ) as session:
+            async with session.get(url) as response:
+                if response.status != 200:
+                    return None
+                data = await response.json()
+
+        translation = (data.get("tweet") or {}).get("translation") or {}
+        text = translation.get("text")
+        source = translation.get("source_lang")
+        if not text or not source or source == "en":
+            return None
+        return translation.get("source_lang_en") or source, text
+
+    except Exception as e:
+        print(f"Translation lookup failed for tweet {tweet_id}: {e}")
+        return None
+
+
+def append_translation(content: str, label: str, text: str) -> str:
+    """Append the translation as a quote block, keeping within Discord's limit."""
+    header = f"\n> **Translated from {label}:**\n"
+    quoted = "\n".join(f"> {line}" for line in text.splitlines())
+    room = MAX_MESSAGE_LENGTH - len(content) - len(header)
+    if room <= 0:
+        return content
+    if len(quoted) > room:
+        quoted = quoted[:max(room - 3, 0)] + "..."
+    return content + header + quoted
 
 
 async def send_preserved_message(
@@ -215,6 +260,11 @@ async def handle_twitter(message: discord.Message, content: str) -> Optional[Dic
             f"{'x' if match.group(2) == 'x' else 'twitter'}.com"
             f"/{match.group(3)}/status/{match.group(4)}"
         )
+        # ponytail: only the first tweet in a message is translated, same as the
+        # button. Loop over re.finditer if multi-tweet messages need it.
+        translation = await fetch_translation(match.group(3), match.group(4))
+        if translation:
+            new_content = append_translation(new_content, *translation)
         return {
             "new_text": new_content,
             "original_url": original_link,
@@ -379,4 +429,5 @@ async def on_message(message: discord.Message):
                 continue
 
 
-client.run(TOKEN)
+if __name__ == "__main__":
+    client.run(TOKEN)

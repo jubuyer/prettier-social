@@ -5,6 +5,7 @@ A stateless Discord bot that automatically rewrites social media links to use pr
 ## Features
 
 - **Twitter/X Links** → `fxtwitter.com` for better embeds
+- **Tweet translation** → non-English tweets get an English translation quoted under the link
 - **Reddit Links** → `vxreddit.com` for video/media previews
 - **TikTok Links** → `tnktok.com` for improved previews
 - **Instagram Links** → `zzinstagram.com` for improved previews
@@ -14,6 +15,7 @@ A stateless Discord bot that automatically rewrites social media links to use pr
 - **Read Messages** - To monitor channels
 - **Send Messages** - To post rewritten links
 - **Manage Messages** - To delete original messages
+- **Manage Webhooks** - To repost under the original author's name and avatar
 - **Attach Files** - To re-attach files from original messages
 - **Embed Links** - For link previews
 

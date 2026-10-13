@@ -1,0 +1,12 @@
+version: "3.9"
+
+services:
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: prettier-social
+    image: prettier-social
+    env_file:
+      - .env    # loads env vars from file outside the image
+    restart: unless-stopped
